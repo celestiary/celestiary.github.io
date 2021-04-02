@@ -1,0 +1,43 @@
+{
+  "name": "celestiary",
+  "description": "Astronomical simulator web app.",
+  "author": "Pablo Mayrgundter",
+  "license": "ISC",
+  "version": "1.0.0",
+  "homepage": "https://github.com/celestiary/web#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/celestiary/web.git"
+  },
+  "bugs": {
+    "url": "https://github.com/celestiary/web/issues"
+  },
+  "scripts": {
+    "test": "cd js ; for t in *_test.js ; do echo $t ; node $t ; done",
+    "build": "npx rollup -c"
+  },
+  "main": "Celestiary.js",
+  "type": "module",
+  "dependencies": {
+    "@pablo-mayrgundter/fullscreen.js": "^1.0.1",
+    "@pablo-mayrgundter/measure.js": "^1.0.7",
+    "@pablo-mayrgundter/parser.js": "^1.0.0",
+    "three": "^0.127.0"
+  },
+  "devDependencies": {
+    "@pablo-mayrgundter/testing.js": "^1.0.0",
+    "@rollup/plugin-node-resolve": "^11.2.1",
+    "dat.gui": "^0.7.7",
+    "stats.js": "^0.17.0"
+  },
+  "keywords": [
+    "astronomy",
+    "astrology",
+    "planetarium",
+    "orary",
+    "gis",
+    "space",
+    "webgl",
+    "threejs"
+  ]
+}
