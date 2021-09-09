@@ -66,3 +66,21 @@ net.http.Server.ssl=false
 git pull upstream master
 git push
 ```
+
+Now visit http://localhost:8080/index.html in your browser
+
+## Deploy
+The app runs at https://celestiary.github.io/ and is in the celestiary.github.io repo.  From it grab the changes from the web repo and then push them:
+
+```
+git pull upstream master
+git push
+```
+
+## Performance
+A first-time session downloads ~3-5MB, mostly of the stars data.  Planet textures are lazy-fetched as the user moves around the scene, but will bring that upwards to ~10MB in full.
+
+Everything is highly cacheable, so subsequent visits are brief HEAD checks on root resources.
+
+Warm load on a local server is 260B in ~300ms (mostly cache checking).  Page rendering finishes by 1s.
+
