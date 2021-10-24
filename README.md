@@ -61,10 +61,6 @@ net.http.Server.log=true
 net.http.Server.index=index.html
 net.http.Server.ssl=false
 ...
-
-```
-git pull upstream master
-git push
 ```
 
 Now visit http://localhost:8080/index.html in your browser
