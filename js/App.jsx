@@ -1,36 +1,46 @@
-import React from 'react'
-import { useLocation } from 'react-router-dom'
-import AboutButton from './About'
+import React, {useEffect, useRef, useState} from 'react'
+import {useLocation} from 'react-router-dom'
+import About from './About'
 import Celestiary from './Celestiary'
-import HelpButton from './Help'
+import Help from './Help'
 import TimePanel from './TimePanel'
-import * as collapsor from './collapsor'
-import { elt, setTitleFromLocation } from './utils'
+import {setTitleFromLocation} from './utils'
 import './index.css'
 
 
+/** @returns {React.ReactElement} */
 export default function App() {
-  const location = useLocation();
-  React.useEffect(() => { setTitleFromLocation(location) }, [location])
+  const [celestiary, setCelestiary] = useState(null)
+  const [isPaused, setIsPaused] = useState(false)
+  const [timeStr, setTimeStr] = useState('')
 
-  const [celestiary, setCelestiary] = React.useState(null);
-  const [timeStr, setTimeStr] = React.useState('');
-  const [showAbout, setShowAbout] = React.useState(false);
-  React.useEffect(() => {
-    setCelestiary(new Celestiary(elt('scene-id'), elt('nav-id'), setTimeStr));
-  }, []);
+  const sceneRef = useRef(null)
+  const navRef = useRef(null)
+
+  const location = useLocation()
+
+
+  useEffect(() => {
+    setTitleFromLocation(location)
+  }, [location])
+
+
+  useEffect(() => {
+    setCelestiary(new Celestiary(sceneRef.current, navRef.current, setTimeStr, setIsPaused))
+  }, [])
+
 
   return (
     <>
-      <div id="scene-id"/>
-      <div id="nav-id" className="panel">Welcome to Celestiary!  Loading...</div>
-      <div id="top-right" className="panel">
-        {celestiary && <TimePanel time={celestiary.time} timeStr={timeStr}/>}
-        <div id="text-buttons">
-          {celestiary && <HelpButton keys={celestiary.keys} />}
-          <AboutButton/>
+      <div ref={sceneRef} id='scene-id'/>
+      <div ref={navRef} id='nav-id' className='panel'>Welcome to Celestiary!  Loading...</div>
+      <div id='top-right' className='panel'>
+        {celestiary && <TimePanel time={celestiary.time} timeStr={timeStr} isPaused={isPaused}/>}
+        <div id='text-buttons'>
+          {celestiary && <Help keys={celestiary.keys}/>}
+          <About/>
         </div>
       </div>
-      <h1 id="target-id"></h1>
-    </>);
-};
+      <h1 id='target-id'> </h1>
+    </>)
+}

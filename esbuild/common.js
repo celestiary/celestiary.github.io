@@ -1,5 +1,5 @@
-const entry = 'js/index.jsx';
-const buildDir = 'docs';
+const entry = './js/index.jsx'
+const buildDir = 'docs'
 const build = {
   entryPoints: [entry],
   outdir: buildDir,
@@ -14,8 +14,8 @@ const build = {
   // See:
   //   https://esbuild.github.io/api/#chunk-names
   //   https://github.com/evanw/esbuild/issues/16
-  splitting: true,
-  logLevel: 'info'
-};
+  splitting: false,
+  logLevel: 'info',
+}
 
-export { build };
+export {build}

@@ -2,42 +2,51 @@
  * Modifies the DOM tree rooted at {@param elt} to make the
  * given {@param tagTypes} interactively collapsable/expandable.
  */
-function makeCollapsable(elt, tagTypes) {
-  tagTypes = tagTypes || ['UL', 'OL'];
-  if (elt.nodeType != 1) { // i.e. DOM Element
-    return;
+export function makeCollapsable(elt, tagTypes) {
+  tagTypes = tagTypes || ['UL', 'OL']
+  if (elt.nodeType !== 1) { // i.e. DOM Element
+    return
   }
-  var copyOfChildNodes = [];
-  for (const cndx in elt.childNodes) {
-    copyOfChildNodes.push(elt.childNodes[cndx]);
+  const copyOfChildNodes = []
+  const children = elt.childNodes
+  for (const cndx in children) {
+    if (Object.prototype.hasOwnProperty.call(children, cndx)) {
+      copyOfChildNodes.push(children[cndx])
+    }
   }
-  if (tagTypes.indexOf(elt.nodeName) != -1) {
-    const toggleCtrl = document.createElement('button');
-    toggleCtrl.setAttribute('class', 'collapsor');
-    toggleCtrl.onclick = (e) => { collapse(toggleCtrl) };
+  if (tagTypes.indexOf(elt.nodeName) !== -1) {
+    const toggleCtrl = document.createElement('button')
+    toggleCtrl.setAttribute('class', 'collapsor')
+    toggleCtrl.onclick = (e) => {
+      collapse(toggleCtrl)
+    }
     toggleCtrl.innerHTML =
-      eltClass(elt, 'check', 'collapsed') ? '[+]' : '[-]';
-    elt.parentNode.insertBefore(toggleCtrl, elt);
+      eltClass(elt, 'check', 'collapsed') ? '[+]' : '[-]'
+    elt.parentNode.insertBefore(toggleCtrl, elt)
   }
   for (const cndx in copyOfChildNodes) {
-    makeCollapsable(copyOfChildNodes[cndx], tagTypes);
+    if (Object.prototype.hasOwnProperty.call(copyOfChildNodes, cndx)) {
+      makeCollapsable(copyOfChildNodes[cndx], tagTypes)
+    }
   }
 }
 
 
 /**
  * The click handler attached to collapsable nodes.
+ *
+ * @returns {boolean}
  */
-function collapse(ctrl) {
-  var target = ctrl.nextSibling;
+export function collapse(ctrl) {
+  const target = ctrl.nextSibling
   if (eltClass(target, 'check', 'collapsed')) {
-    eltClass(target, 'remove', 'collapsed');
-    ctrl.innerHTML = '[-]';
+    eltClass(target, 'remove', 'collapsed')
+    ctrl.innerHTML = '[-]'
   } else {
-    eltClass(target, 'add', 'collapsed');
-    ctrl.innerHTML = '[+]';
+    eltClass(target, 'add', 'collapsed')
+    ctrl.innerHTML = '[+]'
   }
-  return false;
+  return false
 }
 
 
@@ -45,38 +54,40 @@ function collapse(ctrl) {
  * Utility to 'check', 'add' or 'remove' a className attribute
  * for a given node.  If the action is 'check', true is returned
  * if the node has the class, or false otherwise.
+ *
+ * @returns {boolean}
  */
 function eltClass(elt, action, className) {
-  var classNames = elt.className.split(/ +/);
-  if (action == 'check') {
-    for (var i in classNames) {
-      if (classNames[i] == className) {
-        return true;
+  const classNames = elt.className.split(/ +/)
+  if (action === 'check') {
+    for (const i in classNames) {
+      if (Object.prototype.hasOwnProperty.call(classNames, i)) {
+        if (classNames[i] === className) {
+          return true
+        }
       }
     }
-    return false;
-  } else if (action == 'add') {
-    for (var i in classNames) {
-      if (classNames[i] == className) {
-        return true;
+    return false
+  } else if (action === 'add') {
+    for (const i in classNames) {
+      if (Object.prototype.hasOwnProperty.call(classNames, i)) {
+        if (classNames[i] === className) {
+          return true
+        }
       }
     }
-    elt.className += ' ' + className;
-  } else if (action == 'remove') {
-    var newClassNames = '';
-    for (var i in classNames) {
-      if (classNames[i] == className) {
-        continue;
+    elt.className += ` ${className}`
+  } else if (action === 'remove') {
+    let newClassNames = ''
+    for (const i in classNames) {
+      if (Object.prototype.hasOwnProperty.call(classNames, i)) {
+        if (classNames[i] === className) {
+          continue
+        }
+        newClassNames += ` ${classNames[i]}`
       }
-      newClassNames += ' ' + classNames[i];
     }
-    elt.className = newClassNames;
+    elt.className = newClassNames
   }
-  return true;
-}
-
-
-export {
-  makeCollapsable,
-  collapse
+  return true
 }
