@@ -13,11 +13,11 @@
     "url": "https://github.com/celestiary/web/issues"
   },
   "scripts": {
-    "test": "cd js ; for t in *_test.js ; do echo $t ; node $t ; done",
-    "clean": "rm -rf docs ; cp -r public docs",
     "build": "yarn clean && cp -r public/* js/shaders docs/ && node esbuild/build.js",
+    "clean": "rm -rf docs ; cp -r public docs",
+    "lint": "yarn eslint js",
     "serve": "yarn build && node esbuild/serve.js",
-    "lint": "yarn eslint js"
+    "test": "bun test"
   },
   "dependencies": {
     "@emotion/react": "^11.11.3",
@@ -40,7 +40,6 @@
     "zustand": "^4.5.1"
   },
   "devDependencies": {
-    "@pablo-mayrgundter/testing.js": "1.1.2",
     "@tsconfig/recommended": "1.0.3",
     "@types/history": "5.0.0",
     "@types/node": "18.11.10",

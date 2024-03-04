@@ -495,7 +495,7 @@
   dependencies:
     "@pablo-mayrgundter/testing.js" "^1.0.0"
 
-"@pablo-mayrgundter/testing.js@1.1.2", "@pablo-mayrgundter/testing.js@^1.0.0":
+"@pablo-mayrgundter/testing.js@^1.0.0":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@pablo-mayrgundter/testing.js/-/testing.js-1.1.2.tgz#7c1a96eb81b93af3e3cb5e26fcfc8295d69407f1"
   integrity sha512-feCXFMg3ZrI6QTs3qrqr+SJSx5vctDjCyzwYIQ3UNHWOnmp2Aaqt7SyWq+BNiPHzGIUfayacFLHkFz8fSULjEg==

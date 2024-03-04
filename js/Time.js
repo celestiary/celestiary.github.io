@@ -49,6 +49,12 @@ export default class Time {
   }
 
 
+  /** @param {number} unixTime In seconds */
+  setTime(unixTime) {
+    this.simTime = unixTime
+  }
+
+
   /** */
   setTimeToNow() {
     this.timeScale = 1.0
@@ -150,16 +156,26 @@ export function toJulianDay(t) {
 
 
 /**
- * @param {number} UNIX Epoch milliseconds
+ * @param {number} unixTime UNIX Epoch milliseconds
  * @returns {string}
  */
-function timeToDateStr(time) {
-  return new Date(time).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'long',
+export function timeToDateStr(unixTime) {
+  const date = new Date(unixTime)
+
+  // Assuming the month and day are provided in a modern context
+  // Adjust the formatting as needed
+  const dateWithoutYear = date.toLocaleDateString(undefined, {
+    month: 'short',
     day: 'numeric',
     hour: 'numeric',
     minute: 'numeric',
     second: 'numeric',
+    timezone: 'long',
   })
+
+  // Use commas for large-looking years
+  const year = date.getUTCFullYear()
+  const yearStr = Math.abs(year) < 10000 ? (year).toString() : (year).toLocaleString()
+
+  return `${yearStr} ${dateWithoutYear}`
 }
