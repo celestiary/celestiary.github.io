@@ -18,9 +18,7 @@ export default function Star() {
   const [hashLocation] = useHashLocation()
 
 
-  useEffect(() => {
-    setUi(setup(setCatalog))
-  }, [])
+  useEffect(() => setUi(setup(setCatalog)), [])
 
 
   useEffect(() => {
@@ -29,7 +27,7 @@ export default function Star() {
       const time = new Time()
       showStar(ui, starName, star, setStar, catalog, time)
     }
-  }, [star, ui, catalog, hashLocation])
+  }, [catalog, hashLocation, ui, setStar])
 
 
   return (
