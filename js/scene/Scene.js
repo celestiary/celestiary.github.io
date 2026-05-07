@@ -92,6 +92,7 @@ export default class Scene {
       e: false, // equatorial grid
       c: false, // ecliptic grid
       g: false, // galactic grid
+      U: true, // Milky Way galaxy
       v: true, // nav panels / heads-up display (Celestiary-owned, see registerSettingApplier)
     }
     // Custom appliers for settings keys that the Scene doesn't own directly
@@ -138,9 +139,25 @@ export default class Scene {
   }
 
 
-  /** @returns {object} flat {key: bool} map matching permalink SETTINGS_DEFAULTS */
+  /**
+   * Flat {key: bool} map matching permalink SETTINGS_DEFAULTS.
+   *
+   * Two special-case keys are merged in here rather than tracked in
+   * `_settings`:
+   *
+   *   - `L` (landed) — sourced from `Shared.targets.landed` so any code
+   *     path that pins or unpins the surface mode (Scene.land, Scene.goTo)
+   *     drives this without going through a Scene toggle.
+   *   - `A` (AR-fallback) — defaults false here; the permalink writer in
+   *     Celestiary._schedulePermalinkUpdate overwrites it with the live
+   *     ARController.isActive() value before encoding.  The default-false
+   *     here ensures every key in SETTINGS_DEFAULTS has a slot, satisfying
+   *     the round-trip contract for code that snapshots getSettings().
+   *
+   * @returns {object}
+   */
   getSettings() {
-    return {...this._settings, L: Shared.targets.landed}
+    return {...this._settings, L: Shared.targets.landed, A: false}
   }
 
 
@@ -173,6 +190,7 @@ export default class Scene {
       e: () => this.toggleGridEquatorial(),
       c: () => this.toggleGridEcliptic(),
       g: () => this.toggleGridGalactic(),
+      U: () => this.toggleGalaxy(),
       ...this._customAppliers,
     }
     for (const key of Object.keys(dispatch)) {
@@ -609,6 +627,125 @@ export default class Scene {
   }
 
 
+  /**
+   * Enter AR mode: apply the AR scene-visibility preset and disable the
+   * atmosphere post-pass.  Returns a snapshot of the prior state so
+   * `exitAR(snapshot)` can restore it.
+   *
+   * Preset (Stage 1, no camera passthrough yet):
+   *   - asterisms ON, star labels ON, planet labels ON
+   *   - orbits OFF, all reference grids OFF
+   *   - atmosphere OFF (otherwise daytime sky paints over the stars; in
+   *     Stage 2 the atmosphere will return with premultiplied-alpha blend
+   *     so it tints the camera passthrough instead of opaque-painting it)
+   *
+   * Planet meshes are left visible — they form a virtual "ground" beneath
+   * the observer when landed at altitude ~2 m, which is exactly the
+   * spatial reference users want.
+   *
+   * @returns {object} snapshot for exitAR()
+   */
+  enterAR() {
+    const snapshot = {
+      settings: {...this._settings},
+      uiArMode: this.ui._arMode,
+      hiddenInAR: [],
+    }
+    // Atmosphere off — checked by ThreeUI._updateAtmUniforms each frame.
+    this.ui._arMode = true
+    // Hide busy/over-bright meshes for Stage 1 (sky-only view).  Three
+    // distinct rendering issues otherwise paint over the starfield:
+    //   1. `'planet surface and guides'` — at surface altitude 2 m, the
+    //      camera near plane (`dynamicNear` clamps to ≥ 100 m) depth-clips
+    //      the close ground, leaving only the distant lit limb visible.
+    //      The PointLight sunlight (3.7e28 lm) + tone-mapping exposure
+    //      (3e-16, tuned for from-space viewing) clips that limb to white.
+    //   2. `'atmosphere'` — the additive `BackSide` halo shells from
+    //      `newAtmosphere()` on bodies without a physical atmosphere,
+    //      which flash orange/white when the camera aims at them.
+    //   3. `'MilkyWay'` — the procedural galaxy is intentionally noisy
+    //      (additive yellow-orange bulge particles, sparse bright
+    //      cluster stand-ins).  At AR sensor jitter scale, those bright
+    //      particles pop in and out of the field as flicker.  The real
+    //      catalog stars + asterisms remain visible.
+    // Stage 2 (camera passthrough + premultiplied-alpha atmosphere) will
+    // reintroduce ground visuals.  Restored in `exitAR()`.
+    snapshot.frozenLabelLODs = []
+    this.ui.scene.traverse((obj) => {
+      if (obj.visible &&
+          (obj.name === 'planet surface and guides' ||
+           obj.name === 'atmosphere' ||
+           obj.name === 'MilkyWay')) {
+        snapshot.hiddenInAR.push(obj)
+        obj.visible = false
+      }
+      // Force-enable each `'label LOD'` so togglePlanetLabels actually
+      // does something at surface altitude.  These LODs are tuned for
+      // from-space viewing — `labelTooNearDist ≈ surfaceR * 30` (191k km
+      // for Earth) — so at a 2 m altitude the camera distance is well
+      // *inside* the near threshold, and the LOD selects the FAR_OBJ
+      // placeholder (an empty Object3D).  Toggling labelLOD.visible has
+      // no visible effect because the selected child renders nothing.
+      // Disable autoUpdate and pin the labelSheet level visible; restore
+      // both on exit so from-space LOD behaviour returns intact.
+      if (obj.isLOD && obj.name === 'label LOD') {
+        const childStates = obj.levels.map((lv) => ({
+          object: lv.object,
+          visible: lv.object.visible,
+        }))
+        snapshot.frozenLabelLODs.push({
+          lod: obj,
+          autoUpdate: obj.autoUpdate,
+          childStates,
+        })
+        obj.autoUpdate = false
+        for (const lv of obj.levels) {
+          lv.object.visible = lv.object.name !== 'LODFarObj'
+        }
+      }
+    })
+    this.applySettings({
+      a: true, // asterisms
+      l: true, // star labels
+      p: true, // planet labels
+      o: false, // orbits
+      e: false, // equatorial grid
+      c: false, // ecliptic grid
+      g: false, // galactic grid
+    })
+    return snapshot
+  }
+
+
+  /**
+   * Restore the scene state captured by `enterAR()`.
+   *
+   * @param {object} snapshot Return value of enterAR()
+   */
+  exitAR(snapshot) {
+    if (!snapshot) {
+      return
+    }
+    this.ui._arMode = snapshot.uiArMode || false
+    if (Array.isArray(snapshot.hiddenInAR)) {
+      for (const obj of snapshot.hiddenInAR) {
+        obj.visible = true
+      }
+    }
+    if (Array.isArray(snapshot.frozenLabelLODs)) {
+      for (const entry of snapshot.frozenLabelLODs) {
+        entry.lod.autoUpdate = entry.autoUpdate
+        for (const cs of entry.childStates) {
+          cs.object.visible = cs.visible
+        }
+      }
+    }
+    if (snapshot.settings) {
+      this.applySettings(snapshot.settings)
+    }
+  }
+
+
   /** @returns {Object3D} */
   _getOrCreateStarAnchor() {
     if (!this._starAnchor) {
@@ -767,6 +904,27 @@ export default class Scene {
     if (this.grids) {
       this.grids.galactic.visible = !this.grids.galactic.visible
       this._flipSetting('g')
+    }
+  }
+
+
+  /**
+   * Toggle the procedural Milky Way background.  Found by name traversal
+   * since the Points mesh is created inside `newGalaxy()` and not pinned
+   * to a Scene field.  Default-hidden by `enterAR()` (the additive bulge
+   * particles flicker badly at AR sensor jitter scale); the user can flip
+   * this back on with the 'U' shortcut once in AR.
+   */
+  toggleGalaxy() {
+    let target = null
+    this.ui.scene.traverse((obj) => {
+      if (obj.name === 'MilkyWay') {
+        target = obj
+      }
+    })
+    if (target) {
+      target.visible = !target.visible
+      this._flipSetting('U')
     }
   }
 

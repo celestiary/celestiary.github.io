@@ -24,6 +24,15 @@ const METER_PREFIXES = [
 // Celestiary calls scene.land(lat, lng, alt) to restore the pinned-surface
 // view rather than the orbit-style camera quaternion.  Backward compatible:
 // pre-L permalinks decode landed=false.
+//
+// `A` is the AR-fallback flag.  When present on decode, Celestiary
+// best-effort enters AR mode at the saved lat/lng/alt — sensors then
+// overwrite camera orientation each frame, so the saved `cq` quaternion
+// is not authoritative on AR-flagged permalinks.  When AR is unsupported
+// (desktop, denied permissions), the permalink falls through to the
+// regular landed-with-saved-orientation restore.  Encoding rule
+// (encodePermalink): set A=1 whenever AR is active at capture time;
+// position fields are still written so non-AR viewers see something.
 export const SETTINGS_DEFAULTS = Object.freeze({
   a: true, // asterisms (constellation lines)
   l: true, // star labels
@@ -32,8 +41,10 @@ export const SETTINGS_DEFAULTS = Object.freeze({
   e: false, // equatorial reference grid
   c: false, // ecliptic reference grid
   g: false, // galactic reference grid
+  U: true, // procedural Milky Way galaxy (Celestia convention: 'U')
   v: true, // nav panels / heads-up display
   L: false, // landed at surface — see Scene.land
+  A: false, // AR-fallback — enter AR sky view if device supports
 })
 
 

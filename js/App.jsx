@@ -5,8 +5,11 @@ import Box from '@mui/material/Box'
 import ScopedCssBaseline from '@mui/material/ScopedCssBaseline'
 import Stack from '@mui/material/Stack'
 import Celestiary from './Celestiary'
+import useIsMobile from './useIsMobile'
 import useStore from './store/useStore'
 import About from './ui/About'
+import ARButton from './ui/ARButton'
+import ARDebugHUD from './ui/ARDebugHUD'
 import DragModeToggle from './ui/DragModeToggle'
 import SearchBar from './ui/SearchBar'
 import Settings from './ui/Settings'
@@ -25,6 +28,7 @@ export default function App() {
   const [celestiary, setCelestiary] = useState(null)
   const [isPaused, setIsPaused] = useState(false)
   const [timeStr, setTimeStr] = useState('')
+  const isMobile = useIsMobile()
 
   const sceneRef = useRef(null)
   const navInfoRef = useRef(null)
@@ -62,16 +66,18 @@ export default function App() {
       <Stack id='top-right' className='panel' direction='column' justifyContent='flex-start' alignItems='flex-end'>
         {celestiary && <TimePanel time={celestiary.time} timeStr={timeStr} isPaused={isPaused} setIsPaused={setIsPaused}/>}
         {celestiary && <DragModeToggle/>}
+        {celestiary && isMobile && <ARButton celestiary={celestiary}/>}
+        {celestiary && <ARDebugHUD celestiary={celestiary}/>}
         <div id='text-buttons'>
           {celestiary &&
             <Box sx={{position: 'fixed', bottom: 0, left: 0, m: '1em'}}>
-              <TooltipToggleButton tip='About' icon={<StarsIcon/>} onClick={() => navigate('/about')}/>
-              <Route path='/about'>
-                <About/>
-              </Route>
               <TooltipToggleButton tip='Settings' icon={<SettingsIcon/>} onClick={() => navigate('/settings')}/>
               <Route path='/settings'>
                 <Settings keys={celestiary.keys}/>
+              </Route>
+              <TooltipToggleButton tip='About' icon={<StarsIcon/>} onClick={() => navigate('/about')}/>
+              <Route path='/about'>
+                <About/>
               </Route>
             </Box>
           }
